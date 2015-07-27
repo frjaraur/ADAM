@@ -59,7 +59,7 @@ def main(argv):
       elif opt in ("-R", "--Range"):
         iprange = arg
         myips=GetIpRange(iprange)
-        myipchunks=numpy.array_split(myips, 10)
+        myipchunks=numpy.array_split(myips, num_threads)
         #chunk_array(10, myips)
         for ipchunk in myipchunks: 
             print ('[%s]' % ', '.join(map(str, ipchunk)))         
