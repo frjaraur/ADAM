@@ -5,10 +5,10 @@ from subprocess import Popen, PIPE
 from threading import Thread
 
 from multiprocessing import Process, Queue
+
+import numpy
+
 num_threads = 4
-
-
-
 
 
 class Pinger(object):
@@ -37,7 +37,6 @@ class PingAgent(Thread):
 #             q.put ([42,None,"pinging "+ str(ping_ip)])
 
 
-
 def main(argv):
     inputfile = ''
     outputfile = ''
@@ -51,22 +50,28 @@ def main(argv):
     for opt, arg in opts:
       if opt == '-h':
    #          /* print 'test.py -i <inputfile> -o <outputfile>' */
-         ShowHelp(myname)
+        ShowHelp(myname)
 
       elif opt in ("-i", "--ifile"):
-         inputfile = arg
+        inputfile = arg
       elif opt in ("-o", "--ofile"):
-         outputfile = arg
+        outputfile = arg
       elif opt in ("-R", "--Range"):
-         iprange = arg
-         myips=GetIpRange(iprange)
+        iprange = arg
+        myips=GetIpRange(iprange)
+        myipchunks=numpy.array_split(myips, 10)
+        #chunk_array(10, myips)
+        for ipchunk in myipchunks: 
+            print ('[%s]' % ', '.join(map(str, ipchunk)))         
    # q=Queue()
     #for i in range(num_threads):
-    for i in myips:
-        p = Process(target=Pinger,args=(i ))
-        p.start()
-        print (q.get())
-        p.join()
+#     for i in myips:
+#         p = Process(target=Pinger,args=(i ))
+#         p.start()
+#         print (q.get())
+#         p.join()
+
+
 
 def GetIpRange(range):
     print ("Range "+ range)
@@ -74,9 +79,9 @@ def GetIpRange(range):
     array_ipaddresses = list()
 
     for IP in net:
-        print (IP)
+        #print (IP)
         array_ipaddresses.append(IP)
-        
+
     return array_ipaddresses
 
 def ShowHelp(vmyname):
