@@ -1,40 +1,64 @@
 #!/usr/bin/python3
 import sys, getopt, ipaddress,os,re
 
-from subprocess import Popen, PIPE
-from threading import Thread
-
-from multiprocessing import Process, Queue
+import threading
+from queue import Queue
 
 import numpy
 
+import time
+
+
 num_threads = 4
 
+lock = threading.Lock()
 
-class Pinger(object):
-    def __init__(self, hosts):
-        for host in hosts:
-            #q.put ([42,None,"pinging "+ str(host)])
-            pa = PingAgent(host)
-            pa.start()
+class ADAMobject(object):
+    def __init__(self, ip):
+        print ("OBJECT IP:"+ip )
+
+# def Discover(numthread,ipaddresses):
+#     print ("THREAD: " + str(numthread))
+#     with lock:
+#         print ("IPADRESSES:")
+#         print ('[%s]' % ', '.join(map(str, ipaddresses))) 
+#     item = q.get()
+#     print(threading.current_thread().name,item)
+#     q.task_done()
+
+def do_Discover(ipaddresses):
+    #time.sleep(.1) # pretend to do some lengthy work.
+    for ip in ipaddresses: 
+        print ("["+threading.current_thread().name+"] IP --> "+str(ip))
+    
+    # Make sure the whole print completes or threads can mix up output in one line.
+    with lock:
+        #print(threading.current_thread().name,item)
+        print ("IPADRESSES:")
+        print (threading.current_thread().name,'[%s]' % ', '.join(map(str, ipaddresses))) 
+
+# The worker thread pulls an item from the queue and processes it
+def Discover(q,ipadresses):
+    while True:
+        ipaddresses = q.get()
+        do_Discover(ipaddresses)
+        q.task_done()
 
 
-class PingAgent(Thread):
-    def __init__(self, host):
-        Thread.__init__(self)
-        self.host = host
+def GetIpRange(range):
+    print ("Range "+ range)
+    net = ipaddress.ip_network(range)
+    array_ipaddresses = list()
 
-    def run(self):
-        p = Popen('ping -n 1 ' + self.host, stdout=PIPE)
-        m = re.search('Average = (.*)ms', p.stdout.read())
-        if m: print ('Round Trip Time: %s ms -' % m.group(1), self.host)
-        else: print ('Error: Invalid Response -', self.host)
+    for IP in net:
+        #print (IP)
+        array_ipaddresses.append(IP)
 
+    return array_ipaddresses
 
-# def pinger(q,ips):
-#     for ping_ip in ips:
-#         while True:
-#             q.put ([42,None,"pinging "+ str(ping_ip)])
+def ShowHelp(vmyname):
+   print ("HELP ("+vmyname+")")
+   sys.exit(2)
 
 
 def main(argv):
@@ -60,33 +84,31 @@ def main(argv):
         iprange = arg
         myips=GetIpRange(iprange)
         myipchunks=numpy.array_split(myips, num_threads)
+        
+        
+        
         #chunk_array(10, myips)
+        q = Queue()
+      
         for ipchunk in myipchunks: 
-            print ('[%s]' % ', '.join(map(str, ipchunk)))         
-   # q=Queue()
-    #for i in range(num_threads):
-#     for i in myips:
-#         p = Process(target=Pinger,args=(i ))
-#         p.start()
-#         print (q.get())
-#         p.join()
+            #print ('[%s]' % ', '.join(map(str, ipchunk)))
+            #Discover(ipchunk)
+            
+            t = threading.Thread(target=Discover,args=(q,ipchunk))
+            t.daemon = True  # thread dies when main thread (only non-daemon thread) exits.
+            t.start()
+            
+        
+        start = time.perf_counter()
+        for ipchunk in myipchunks:             
+            q.put(ipchunk)
+                
+        q.join() 
+           # for ip in ipchunk: 
+           #     print ("IP --> "+str(ip))
 
+        print('time:',time.perf_counter() - start)
 
-
-def GetIpRange(range):
-    print ("Range "+ range)
-    net = ipaddress.ip_network(range)
-    array_ipaddresses = list()
-
-    for IP in net:
-        #print (IP)
-        array_ipaddresses.append(IP)
-
-    return array_ipaddresses
-
-def ShowHelp(vmyname):
-   print ("HELP ("+vmyname+")")
-   sys.exit(2)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
