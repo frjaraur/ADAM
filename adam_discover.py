@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import sys, getopt, ipaddress,os,re
+import sys, getopt, ipaddress,os,re,socket
 
 import threading
 from queue import Queue
@@ -14,17 +14,34 @@ import subprocess
 num_threads = 4
 
 array_discoveredHosts=[]
+dict_discoveredData={}
 
 lock = threading.Lock()
+
+standart_tcp_ports=[21,22,23,80,135,137,138,139,8080,443]
 
 class IPobj:
     def __init__(self, ip):
         print ("OBJECT IP:"+ip )
 
-    def addLabel(self,label,value):
+    def addLabel(self,ip,label,value):
         print ("LABEL: ["+label+"]")
         print ("VALUE: ["+value+"]")
+        dict_discoveredData[(ip, label)] = value
 
+
+def CheckTCPPort(ip, port):
+    s = socket.socket()
+    #s.setblocking(0)
+    s.settimeout(10)
+    print ("Attempting to connect to %s on port %s" % (ip, port))
+    try:
+        s.connect((ip, port))
+        print ("Connected to %s on port %s" % (ip, port))
+        return True
+    except socket.error:
+        print ("Connection to %s on port %s failed" % (ip, port))
+        return False
 
 def ICMPSimplePing(ip):
     while True:
@@ -47,12 +64,17 @@ def ADAMDebug(debug,debug_text):
 def ADAMDiscover(ip):
     #for ip in ipaddresses: 
         ADAMDebug(debug,"Discover IP " + ip)
-        if ICMPSimplePing(ip):
-            ADAMDebug(debug,"Creamos objeto...")
-            obj=IPobj(ip)
-            obj.addLabel("IPADDRESS",ip)
-            global array_discoveredHosts
-            array_discoveredHosts.append(obj)    
+        if not ICMPSimplePing(ip):
+            return 0
+        
+        ADAMDebug(debug,"Creamos objeto...")
+        obj=IPobj(ip)
+        obj.addLabel(ip,"IPADDRESS",ip)
+        global array_discoveredHosts
+        array_discoveredHosts.append(obj)
+        for port in standart_tcp_ports:
+            if CheckTCPPort(ip, port):
+                obj.addLabel(ip,"PORT_TCP_"+str(port),"alive")  
     
 
 def do_ADAMProcess(ipaddresses):
@@ -145,6 +167,12 @@ def main(argv):
         total_ipaddresses_discovered=len(array_discoveredHosts)
         print ("Discovered "+str(total_ipaddresses_discovered)+" from "+str(total_ipaddresses_in_range)+" possible IPs")       
         print('time: '+str(round((time.perf_counter() - start),2))+"s")
+
+    for discovered_ips in dict_discoveredData:
+        for discovered_ip in discovered_ips:
+            for discovered_label in dict_discoveredData[discovered_ip]:    
+                print (discovered_ip)
+                print (dict_discoveredData[discovered_ip][discovered_label])
 
 
 if __name__ == "__main__":
