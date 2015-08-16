@@ -9,13 +9,14 @@ import numpy
 import time
 import subprocess
 
-
+from collections import defaultdict
 
 num_threads = 4
 
 array_discoveredHosts=[]
-dict_discoveredData={}
-
+#dict_discoveredData={}
+#dict_discoveredData=defaultdict(dict)
+dict_discoveredData=dict()
 lock = threading.Lock()
 
 standart_tcp_ports=[21,22,23,80,135,137,138,139,8080,443]
@@ -23,11 +24,12 @@ standart_tcp_ports=[21,22,23,80,135,137,138,139,8080,443]
 class IPobj:
     def __init__(self, ip):
         print ("OBJECT IP:"+ip )
+        dict_discoveredData[ip]=dict()
 
     def addLabel(self,ip,label,value):
         print ("LABEL: ["+label+"]")
         print ("VALUE: ["+value+"]")
-        dict_discoveredData[(ip, label)] = value
+        dict_discoveredData[ip][label] = value
 
 
 def CheckTCPPort(ip, port):
@@ -168,11 +170,13 @@ def main(argv):
         print ("Discovered "+str(total_ipaddresses_discovered)+" from "+str(total_ipaddresses_in_range)+" possible IPs")       
         print('time: '+str(round((time.perf_counter() - start),2))+"s")
 
-    for discovered_ips in dict_discoveredData:
-        for discovered_ip in discovered_ips:
-            for discovered_label in dict_discoveredData[discovered_ip]:    
-                print (discovered_ip)
-                print (dict_discoveredData[discovered_ip][discovered_label])
+    #print (dict_discoveredData.items())
+    #for dict_discoveredDataIP,dict_discoveredDatalabel,dict_discoveredDatavalue in dict_discoveredData.items():
+        #print (dict_discoveredDataIP)
+    for discovered_ip in dict_discoveredData.keys():
+        print ("->" + discovered_ip)
+        for discovered_label in dict_discoveredData[discovered_ip].keys():    
+            print (discovered_label+"--->"+dict_discoveredData[discovered_ip][discovered_label])
 
 
 if __name__ == "__main__":
