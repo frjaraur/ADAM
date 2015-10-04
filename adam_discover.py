@@ -112,6 +112,10 @@ def ADAMDiscover(ip):
         adam_ssh.SSH_test(ip)
 
 
+
+
+
+
 def do_ADAMProcess(ipaddresses):
      # pretend to do some lengthy work.
     for ip in ipaddresses:

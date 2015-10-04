@@ -6,8 +6,9 @@ def SSH_test(ip):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         print ("Checking SSH Connection to " + ip)
-        ssh.connect(ip, username='zero', password='00friday13th00')
-        ssh.exec_command("uptime")
+        ssh.connect(ip, username='zero', password='jj00friday13th00')
+        stdin, stdout, stderr = ssh.exec_command("uptime")
+        #print (stdout.readlines())
         ssh.close()
         return True
     except paramiko.ssh_exception.AuthenticationException:
