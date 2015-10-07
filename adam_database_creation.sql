@@ -1,22 +1,23 @@
-CREATE TABLE adam.credentials_type (
-	id INT NOT NULL AUTO_INCREMENT,
-	type char(25) NOT NULL,
-    description char(250),
-    PRIMARY KEY (id)
-    );
-    
-CREATE TABLE adam.credentials (
-	id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    salt char(250) NOT NULL,
-    username char(250) NOT NULL,
-    domain char(250),
-    authfile MEDIUMBLOB,
-    description char(250),
-    credentials_type_id INT NOT NULL
-    );    
+CREATE DATABASE ADAM;
+USE ADAM;
+CREATE TABLE ADAM.CREDENTIAL_TYPE (
+	id SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	name CHAR(150) NOT NULL,
+	description CHAR(250) NOT NULL
+) ENGINE = InnoDB;
 
-ALTER TABLE credentials
-ADD CONSTRAINT fk_credential_type
-FOREIGN KEY (credentials_type_id) REFERENCES credentials_type (id)
-ON DELETE CASCADE
-ON UPDATE RESTRICT;
+CREATE TABLE ADAM.CREDENTIAL (
+	id MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	name CHAR(255) NOT NULL,
+	salt CHAR(250) NOT NULL,
+	username CHAR(250),
+	domain CHAR(250),
+	password CHAR(250),
+	authfile MEDIUMBLOB,
+	description CHAR(250) NOT NULL,
+	credential_type_id SMALLINT UNSIGNED NOT NULL,
+	CONSTRAINT `fk_credential_type`
+		FOREIGN KEY (credential_type_id) REFERENCES ADAM.CREDENTIAL_TYPE (id)
+		ON DELETE CASCADE
+		ON UPDATE RESTRICT
+) ENGINE = InnoDB;
